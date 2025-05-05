@@ -1,0 +1,13 @@
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/pkg/
+vendor/
+.idea/
+.vscode/
+.idea/.idea/
+*.log
+.env
+/bin/
