@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"banking-api/internal/services"
+	"banking-api/internal/db"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -16,9 +16,9 @@ func CreateAccountHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db := r.Context().Value("db").(*sql.DB)
+	database := r.Context().Value("db").(*sql.DB)
 
-	account, err := services.CreateAccountService(db, userID)
+	account, err := db.CreateAccountService(database, userID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка создания счета: %v", err), http.StatusInternalServerError)
 		return
