@@ -58,3 +58,44 @@ func GetAccountByID(db *sql.DB, accountID int) (*models.Account, error) {
 
 	return &acc, nil
 }
+
+func TransferFunds(db *sql.DB, senderID, receiverID int, amount float64) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("не удалось начать транзакцию: %v", err)
+	}
+	defer tx.Rollback()
+
+	var senderBalance float64
+	err = tx.QueryRow("SELECT balance FROM accounts WHERE id = $1 FOR UPDATE", senderID).Scan(&senderBalance)
+	if err != nil {
+		return fmt.Errorf("не удалось получить баланс отправителя: %v", err)
+	}
+	if senderBalance < amount {
+		return fmt.Errorf("недостаточно средств")
+	}
+
+	_, err = tx.Exec("UPDATE accounts SET balance = balance - $1 WHERE id = $2", amount, senderID)
+	if err != nil {
+		return fmt.Errorf("не удалось списать средства у отправителя: %v", err)
+	}
+
+	_, err = tx.Exec("UPDATE accounts SET balance = balance + $1 WHERE id = $2", amount, receiverID)
+	if err != nil {
+		return fmt.Errorf("не удалось зачислить средства получателю: %v", err)
+	}
+
+	_, err = tx.Exec(
+		"INSERT INTO transactions (sender_id, receiver_id, amount, created_at) VALUES ($1, $2, $3, $4)",
+		senderID, receiverID, amount, time.Now(),
+	)
+	if err != nil {
+		return fmt.Errorf("не удалось записать транзакцию: %v", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("ошибка коммита транзакции: %v", err)
+	}
+
+	return nil
+}

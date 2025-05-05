@@ -33,6 +33,9 @@ func main() {
 	r.HandleFunc("/register", handlers.RegisterHandler).Methods("POST")
 	r.HandleFunc("/login", handlers.LoginHandler).Methods("POST")
 	r.HandleFunc("/accounts", handlers.GetAccountsHandler).Methods("GET")
+	r.HandleFunc("/account", handlers.GetAccountByIDHandler).Methods("GET")
+	r.HandleFunc("/accounts", handlers.CreateAccountHandler).Methods("POST")
+	r.HandleFunc("/transfer", handlers.TransferFundsHandler).Methods("POST")
 
 	fmt.Println("Сервер запущен на http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
