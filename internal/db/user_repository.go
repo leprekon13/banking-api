@@ -32,3 +32,16 @@ func AddUser(db *sql.DB, user *models.User) error {
 
 	return nil
 }
+
+func LoginUser(db *sql.DB, email string) (*models.User, error) {
+	var user models.User
+	err := db.QueryRow("SELECT id, username, email, password_hash, created_at FROM users WHERE email = $1", email).
+		Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("пользователь с таким email не найден")
+		}
+		return nil, fmt.Errorf("ошибка при поиске пользователя: %v", err)
+	}
+	return &user, nil
+}
