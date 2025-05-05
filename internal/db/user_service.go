@@ -37,6 +37,25 @@ func RegisterUser(db *sql.DB, username, email, password string) (string, error) 
 	return token, nil
 }
 
+func LoginUserService(db *sql.DB, email, password string) (string, error) {
+	user, err := LoginUser(db, email)
+	if err != nil {
+		return "", fmt.Errorf("ошибка входа: %v", err)
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
+	if err != nil {
+		return "", fmt.Errorf("неверный пароль")
+	}
+
+	token, err := GenerateJWT(user)
+	if err != nil {
+		return "", fmt.Errorf("ошибка генерации JWT: %v", err)
+	}
+
+	return token, nil
+}
+
 func GenerateJWT(user *models.User) (string, error) {
 	err := godotenv.Load()
 	if err != nil {
