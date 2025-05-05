@@ -24,3 +24,22 @@ func CreateAccount(db *sql.DB, userID int) (*models.Account, error) {
 
 	return account, nil
 }
+
+func GetAccountsByUserID(db *sql.DB, userID int) ([]models.Account, error) {
+	rows, err := db.Query("SELECT id, user_id, balance, created_at FROM accounts WHERE user_id = $1", userID)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка запроса счетов: %v", err)
+	}
+	defer rows.Close()
+
+	var accounts []models.Account
+	for rows.Next() {
+		var acc models.Account
+		if err := rows.Scan(&acc.ID, &acc.UserID, &acc.Balance, &acc.CreatedAt); err != nil {
+			return nil, fmt.Errorf("ошибка чтения строки: %v", err)
+		}
+		accounts = append(accounts, acc)
+	}
+
+	return accounts, nil
+}

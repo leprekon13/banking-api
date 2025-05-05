@@ -32,6 +32,7 @@ func main() {
 
 	r.HandleFunc("/register", handlers.RegisterHandler).Methods("POST")
 	r.HandleFunc("/login", handlers.LoginHandler).Methods("POST")
+	r.HandleFunc("/accounts", handlers.GetAccountsHandler).Methods("GET")
 
 	fmt.Println("Сервер запущен на http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
