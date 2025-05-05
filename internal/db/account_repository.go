@@ -43,3 +43,18 @@ func GetAccountsByUserID(db *sql.DB, userID int) ([]models.Account, error) {
 
 	return accounts, nil
 }
+
+func GetAccountByID(db *sql.DB, accountID int) (*models.Account, error) {
+	row := db.QueryRow("SELECT id, user_id, balance, created_at FROM accounts WHERE id = $1", accountID)
+
+	var acc models.Account
+	err := row.Scan(&acc.ID, &acc.UserID, &acc.Balance, &acc.CreatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // не найден
+		}
+		return nil, err
+	}
+
+	return &acc, nil
+}

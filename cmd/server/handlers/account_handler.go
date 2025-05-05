@@ -24,6 +24,7 @@ func CreateAccountHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(account)
 }
@@ -41,13 +42,38 @@ func GetAccountsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn := r.Context().Value("db").(*sql.DB)
-	accounts, err := db.GetAccountsByUserID(conn, userID)
+	database := r.Context().Value("db").(*sql.DB)
+
+	accounts, err := db.GetAccountsByUserID(database, userID)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("ошибка получения счетов: %v", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Ошибка получения счетов: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(accounts)
+}
+
+func GetAccountByIDHandler(w http.ResponseWriter, r *http.Request) {
+	accountID, err := strconv.Atoi(r.URL.Query().Get("account_id"))
+	if err != nil {
+		http.Error(w, "Неверный account_id", http.StatusBadRequest)
+		return
+	}
+
+	database := r.Context().Value("db").(*sql.DB)
+
+	account, err := db.GetAccountByID(database, accountID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Ошибка получения счета: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	if account == nil {
+		http.Error(w, "Счет не найден", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(account)
 }
