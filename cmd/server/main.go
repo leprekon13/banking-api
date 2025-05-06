@@ -16,8 +16,6 @@ import (
 func main() {
 	cfg := config.LoadConfig()
 	conn := db.ConnectDB(cfg)
-
-	// Запуск шедулера просроченных платежей
 	services.StartCreditScheduler(conn)
 
 	r := mux.NewRouter()
@@ -43,6 +41,7 @@ func main() {
 	r.HandleFunc("/credits", handlers.CreateCreditHandler).Methods("POST")
 	r.HandleFunc("/credits/pay", handlers.PayCreditInstallmentHandler).Methods("POST")
 	r.HandleFunc("/credits/schedule", handlers.GetPaymentScheduleHandler).Methods("GET")
+	r.HandleFunc("/cards", handlers.CreateCardHandler).Methods("POST")
 
 	fmt.Println("Сервер запущен на http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
