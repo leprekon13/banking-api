@@ -48,3 +48,12 @@ func LoginUser(db *sql.DB, email string) (*models.User, error) {
 	}
 	return &user, nil
 }
+func GetUserByID(db *sql.DB, userID int) (*models.User, error) {
+	var user models.User
+	err := db.QueryRow("SELECT id, username, email, password_hash, created_at FROM users WHERE id = $1", userID).
+		Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("пользователь не найден: %v", err)
+	}
+	return &user, nil
+}

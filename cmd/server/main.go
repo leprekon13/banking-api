@@ -61,6 +61,7 @@ func main() {
 	protected.HandleFunc("/cards", handlers.GetCardsHandler).Methods("GET")
 
 	protected.HandleFunc("/analytics", handlers.GetAnalyticsHandler).Methods("GET")
+	protected.HandleFunc("/accounts/deposit", handlers.DepositHandler).Methods("POST")
 
 	log.Info("Сервер запущен на http://localhost:8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {

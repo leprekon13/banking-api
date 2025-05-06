@@ -86,7 +86,7 @@ func TransferFunds(db *sql.DB, senderID, receiverID int, amount float64) error {
 	}
 
 	_, err = tx.Exec(
-		"INSERT INTO transactions (sender_id, receiver_id, amount, created_at) VALUES ($1, $2, $3, $4)",
+		"INSERT INTO transactions (from_account_id, to_account_id, amount, created_at) VALUES ($1, $2, $3, $4)",
 		senderID, receiverID, amount, time.Now(),
 	)
 	if err != nil {
@@ -98,4 +98,10 @@ func TransferFunds(db *sql.DB, senderID, receiverID int, amount float64) error {
 	}
 
 	return nil
+}
+func DepositToAccount(db *sql.DB, accountID int, amount float64) error {
+	_, err := db.Exec(`
+		UPDATE accounts SET balance = balance + $1 WHERE id = $2
+	`, amount, accountID)
+	return err
 }

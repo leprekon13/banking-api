@@ -77,3 +77,31 @@ func GetAccountByIDHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(account)
 }
+
+func DepositHandler(w http.ResponseWriter, r *http.Request) {
+	database := r.Context().Value("db").(*sql.DB)
+
+	var input struct {
+		AccountID int     `json:"account_id"`
+		Amount    float64 `json:"amount"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, "Неверный формат запроса", http.StatusBadRequest)
+		return
+	}
+
+	if input.Amount <= 0 {
+		http.Error(w, "Сумма должна быть положительной", http.StatusBadRequest)
+		return
+	}
+
+	err := db.DepositToAccount(database, input.AccountID, input.Amount)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Ошибка пополнения: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Счёт успешно пополнен"))
+}
