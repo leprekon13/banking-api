@@ -109,3 +109,17 @@ func PayNextInstallment(db *sql.DB, creditID int) error {
 
 	return nil
 }
+
+// ProcessOverduePayments находит просроченные платежи и увеличивает их сумму на 10%
+func ProcessOverduePayments(db *sql.DB) error {
+	_, err := db.Exec(`
+		UPDATE payment_schedules
+		SET amount = amount * 1.10
+		WHERE due_date < NOW()
+		  AND paid = false
+	`)
+	if err != nil {
+		return fmt.Errorf("ошибка при обработке просроченных платежей: %v", err)
+	}
+	return nil
+}

@@ -4,6 +4,7 @@ import (
 	"banking-api/cmd/server/handlers"
 	"banking-api/config"
 	"banking-api/internal/db"
+	"banking-api/internal/services"
 	"context"
 	"fmt"
 	"log"
@@ -15,6 +16,9 @@ import (
 func main() {
 	cfg := config.LoadConfig()
 	conn := db.ConnectDB(cfg)
+
+	// Запуск шедулера просроченных платежей
+	services.StartCreditScheduler(conn)
 
 	r := mux.NewRouter()
 
