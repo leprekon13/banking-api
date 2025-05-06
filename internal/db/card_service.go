@@ -5,9 +5,12 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"fmt"
+	"golang.org/x/crypto/bcrypt"
 	"math/big"
 	"time"
 )
+
+var HMAC_SECRET = []byte("supersecretkey_for_hmac")
 
 func CreateCardService(db *sql.DB, userID int, accountID int) (*models.Card, error) {
 	cardNumber, err := generateCardNumber()
@@ -20,15 +23,21 @@ func CreateCardService(db *sql.DB, userID int, accountID int) (*models.Card, err
 		return nil, fmt.Errorf("ошибка генерации CVV: %v", err)
 	}
 
-	expiration := time.Now().AddDate(3, 0, 0) // тип time.Time
+	hashedCVV, err := bcrypt.GenerateFromPassword([]byte(cvv), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка хеширования CVV: %v", err)
+	}
+
+	hmacValue := computeHMAC(cardNumber, HMAC_SECRET)
+	expiration := time.Now().AddDate(3, 0, 0)
+	createdAt := time.Now()
 
 	var cardID int
-	createdAt := time.Now()
 	err = db.QueryRow(`
-		INSERT INTO cards (account_id, card_number, expiration_date, cvv, created_at)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO cards (account_id, card_number, expiration_date, cvv, hmac, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING id
-	`, accountID, cardNumber, expiration, cvv, createdAt).Scan(&cardID)
+	`, accountID, cardNumber, expiration, string(hashedCVV), hmacValue, createdAt).Scan(&cardID)
 
 	if err != nil {
 		return nil, fmt.Errorf("ошибка при сохранении карты в базу: %v", err)
@@ -39,7 +48,8 @@ func CreateCardService(db *sql.DB, userID int, accountID int) (*models.Card, err
 		AccountID:      accountID,
 		CardNumber:     cardNumber,
 		ExpirationDate: expiration,
-		CVV:            cvv,
+		CVV:            "", // скрыт
+		HMAC:           hmacValue,
 		CreatedAt:      createdAt,
 	}, nil
 }
