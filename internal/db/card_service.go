@@ -18,6 +18,11 @@ func CreateCardService(db *sql.DB, userID int, accountID int) (*models.Card, err
 		return nil, fmt.Errorf("ошибка генерации номера карты: %v", err)
 	}
 
+	encryptedCardNumber, err := encryptPGP(cardNumber)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка шифрования номера карты: %v", err)
+	}
+
 	cvv, err := generateCVV()
 	if err != nil {
 		return nil, fmt.Errorf("ошибка генерации CVV: %v", err)
@@ -37,8 +42,7 @@ func CreateCardService(db *sql.DB, userID int, accountID int) (*models.Card, err
 		INSERT INTO cards (account_id, card_number, expiration_date, cvv, hmac, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING id
-	`, accountID, cardNumber, expiration, string(hashedCVV), hmacValue, createdAt).Scan(&cardID)
-
+	`, accountID, encryptedCardNumber, expiration, string(hashedCVV), hmacValue, createdAt).Scan(&cardID)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка при сохранении карты в базу: %v", err)
 	}
@@ -46,7 +50,7 @@ func CreateCardService(db *sql.DB, userID int, accountID int) (*models.Card, err
 	return &models.Card{
 		ID:             cardID,
 		AccountID:      accountID,
-		CardNumber:     cardNumber,
+		CardNumber:     encryptedCardNumber,
 		ExpirationDate: expiration,
 		CVV:            "", // скрыт
 		HMAC:           hmacValue,
