@@ -86,3 +86,26 @@ func PayCreditInstallment(db *sql.DB, accountID, creditID int) error {
 
 	return nil
 }
+func PayNextInstallment(db *sql.DB, creditID int) error {
+	var id int
+	err := db.QueryRow(`
+		SELECT id FROM payment_schedules 
+		WHERE credit_id = $1 AND paid = false 
+		ORDER BY due_date ASC LIMIT 1
+	`, creditID).Scan(&id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("все платежи уже оплачены")
+		}
+		return fmt.Errorf("ошибка получения следующего платежа: %v", err)
+	}
+
+	_, err = db.Exec(`
+		UPDATE payment_schedules SET paid = true WHERE id = $1
+	`, id)
+	if err != nil {
+		return fmt.Errorf("ошибка обновления статуса платежа: %v", err)
+	}
+
+	return nil
+}

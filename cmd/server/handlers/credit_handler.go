@@ -49,3 +49,25 @@ func CreateCreditHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(credit)
 }
+
+func PayCreditInstallmentHandler(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		CreditID int `json:"credit_id"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, "Неверный JSON", http.StatusBadRequest)
+		return
+	}
+
+	database := r.Context().Value("db").(*sql.DB)
+
+	err := db.PayNextInstallment(database, input.CreditID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Ошибка оплаты платежа: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Ближайший платеж успешно оплачен"))
+}
