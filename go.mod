@@ -13,5 +13,6 @@ require (
 require (
 	github.com/ProtonMail/go-crypto v1.2.0 // indirect
 	github.com/cloudflare/circl v1.6.0 // indirect
+	github.com/sirupsen/logrus v1.9.3 // indirect
 	golang.org/x/sys v0.32.0 // indirect
 )

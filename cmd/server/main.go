@@ -7,14 +7,19 @@ import (
 	"banking-api/internal/db"
 	"banking-api/internal/services"
 	"context"
-	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
 
 func main() {
+	log.SetFormatter(&log.TextFormatter{
+		FullTimestamp: true,
+	})
+	log.SetLevel(log.InfoLevel)
+	log.Info("logrus настроен и работает")
+
 	cfg := config.LoadConfig()
 	conn := db.ConnectDB(cfg)
 	services.StartCreditScheduler(conn)
@@ -57,6 +62,8 @@ func main() {
 
 	protected.HandleFunc("/analytics", handlers.GetAnalyticsHandler).Methods("GET")
 
-	fmt.Println("Сервер запущен на http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Info("Сервер запущен на http://localhost:8080")
+	if err := http.ListenAndServe(":8080", r); err != nil {
+		log.Fatalf("Ошибка запуска сервера: %v", err)
+	}
 }
