@@ -36,3 +36,28 @@ func CreatePaymentSchedule(db *sql.DB, creditID int, monthlyAmount float64, mont
 	}
 	return nil
 }
+
+func GetPaymentScheduleByCreditID(db *sql.DB, creditID int) ([]models.PaymentSchedule, error) {
+	rows, err := db.Query(`
+		SELECT id, credit_id, amount, due_date, paid, created_at
+		FROM payment_schedules
+		WHERE credit_id = $1
+		ORDER BY due_date
+	`, creditID)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка получения графика платежей: %v", err)
+	}
+	defer rows.Close()
+
+	var schedules []models.PaymentSchedule
+	for rows.Next() {
+		var ps models.PaymentSchedule
+		err := rows.Scan(&ps.ID, &ps.CreditID, &ps.Amount, &ps.DueDate, &ps.Paid, &ps.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("ошибка чтения строки: %v", err)
+		}
+		schedules = append(schedules, ps)
+	}
+
+	return schedules, nil
+}

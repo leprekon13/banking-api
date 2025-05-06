@@ -71,3 +71,28 @@ func PayCreditInstallmentHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Ближайший платеж успешно оплачен"))
 }
+
+func GetPaymentScheduleHandler(w http.ResponseWriter, r *http.Request) {
+	creditIDStr := r.URL.Query().Get("credit_id")
+	if creditIDStr == "" {
+		http.Error(w, "credit_id обязателен", http.StatusBadRequest)
+		return
+	}
+
+	creditID, err := strconv.Atoi(creditIDStr)
+	if err != nil {
+		http.Error(w, "credit_id должен быть числом", http.StatusBadRequest)
+		return
+	}
+
+	database := r.Context().Value("db").(*sql.DB)
+
+	schedule, err := db.GetPaymentScheduleByCreditID(database, creditID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Ошибка получения графика: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(schedule)
+}
