@@ -42,6 +42,7 @@ func main() {
 	r.HandleFunc("/credits/pay", handlers.PayCreditInstallmentHandler).Methods("POST")
 	r.HandleFunc("/credits/schedule", handlers.GetPaymentScheduleHandler).Methods("GET")
 	r.HandleFunc("/cards", handlers.CreateCardHandler).Methods("POST")
+	r.HandleFunc("/cards", handlers.GetCardsHandler).Methods("GET")
 
 	fmt.Println("Сервер запущен на http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
