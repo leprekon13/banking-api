@@ -10,7 +10,8 @@ CREATE TABLE accounts (
                           id SERIAL PRIMARY KEY,
                           user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                           balance DECIMAL(12, 2) DEFAULT 0.00,
-                          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+                          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+                          updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE cards (
@@ -36,14 +37,16 @@ CREATE TABLE credits (
                          user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                          amount DECIMAL(12, 2) NOT NULL,
                          interest_rate DECIMAL(5, 2) NOT NULL,
+                         start_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                         months INTEGER NOT NULL,
                          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE payment_schedules (
                                    id SERIAL PRIMARY KEY,
                                    credit_id INTEGER REFERENCES credits(id) ON DELETE CASCADE,
-                                   payment_date DATE,
-                                   payment_amount DECIMAL(12, 2),
-                                   status VARCHAR(50),
+                                   amount DECIMAL(12, 2) NOT NULL,
+                                   due_date TIMESTAMPTZ NOT NULL,
+                                   paid BOOLEAN NOT NULL DEFAULT FALSE,
                                    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

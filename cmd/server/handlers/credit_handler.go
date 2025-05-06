@@ -6,14 +6,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func CreateCreditHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		UserID       int     `json:"user_id"`
+		AccountID    int     `json:"account_id"`
 		Amount       float64 `json:"amount"`
 		InterestRate float64 `json:"interest_rate"`
-		Months       int     `json:"months"`
+		Months       int     `json:"duration_months"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -21,9 +24,23 @@ func CreateCreditHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	authHeader := r.Header.Get("Authorization")
+	tokenStr := authHeader[len("Bearer "):]
+	token, _ := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		return []byte("mHbH5mvLJSfwE+YJXJtM6MwAS1vT6bf+Yp7C3Rst4aU="), nil
+	})
+
+	claims := token.Claims.(jwt.MapClaims)
+	userIDStr := claims["sub"].(string)
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		http.Error(w, "Неверный user_id в токене", http.StatusBadRequest)
+		return
+	}
+
 	database := r.Context().Value("db").(*sql.DB)
 
-	credit, err := db.CreateCreditService(database, input.UserID, input.Amount, input.InterestRate, input.Months)
+	credit, err := db.CreateCreditService(database, userID, input.Amount, input.InterestRate, input.Months)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка создания кредита: %v", err), http.StatusInternalServerError)
 		return
