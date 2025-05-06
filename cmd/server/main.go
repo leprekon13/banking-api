@@ -2,6 +2,7 @@ package main
 
 import (
 	"banking-api/cmd/server/handlers"
+	middleware "banking-api/cmd/server/middleware"
 	"banking-api/config"
 	"banking-api/internal/db"
 	"banking-api/internal/services"
@@ -20,6 +21,7 @@ func main() {
 
 	r := mux.NewRouter()
 
+	// Подключение к базе данных в контекст
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := context.WithValue(r.Context(), "db", conn)
@@ -27,6 +29,7 @@ func main() {
 		})
 	})
 
+	// Публичные маршруты
 	r.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("pong"))
@@ -34,15 +37,25 @@ func main() {
 
 	r.HandleFunc("/register", handlers.RegisterHandler).Methods("POST")
 	r.HandleFunc("/login", handlers.LoginHandler).Methods("POST")
-	r.HandleFunc("/accounts", handlers.GetAccountsHandler).Methods("GET")
-	r.HandleFunc("/account", handlers.GetAccountByIDHandler).Methods("GET")
-	r.HandleFunc("/accounts", handlers.CreateAccountHandler).Methods("POST")
-	r.HandleFunc("/transfer", handlers.TransferFundsHandler).Methods("POST")
-	r.HandleFunc("/credits", handlers.CreateCreditHandler).Methods("POST")
-	r.HandleFunc("/credits/pay", handlers.PayCreditInstallmentHandler).Methods("POST")
-	r.HandleFunc("/credits/schedule", handlers.GetPaymentScheduleHandler).Methods("GET")
-	r.HandleFunc("/cards", handlers.CreateCardHandler).Methods("POST")
-	r.HandleFunc("/cards", handlers.GetCardsHandler).Methods("GET")
+
+	// Защищённые маршруты
+	protected := r.PathPrefix("/").Subrouter()
+	protected.Use(middleware.AuthMiddleware)
+
+	protected.HandleFunc("/accounts", handlers.GetAccountsHandler).Methods("GET")
+	protected.HandleFunc("/account", handlers.GetAccountByIDHandler).Methods("GET")
+	protected.HandleFunc("/accounts", handlers.CreateAccountHandler).Methods("POST")
+
+	protected.HandleFunc("/transfer", handlers.TransferFundsHandler).Methods("POST")
+
+	protected.HandleFunc("/credits", handlers.CreateCreditHandler).Methods("POST")
+	protected.HandleFunc("/credits/pay", handlers.PayCreditInstallmentHandler).Methods("POST")
+	protected.HandleFunc("/credits/schedule", handlers.GetPaymentScheduleHandler).Methods("GET")
+
+	protected.HandleFunc("/cards", handlers.CreateCardHandler).Methods("POST")
+	protected.HandleFunc("/cards", handlers.GetCardsHandler).Methods("GET")
+
+	protected.HandleFunc("/analytics", handlers.GetAnalyticsHandler).Methods("GET")
 
 	fmt.Println("Сервер запущен на http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", r))

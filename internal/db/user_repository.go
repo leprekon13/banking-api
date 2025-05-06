@@ -24,8 +24,11 @@ func AddUser(db *sql.DB, user *models.User) error {
 		return fmt.Errorf("имя пользователя уже занято")
 	}
 
-	_, err = db.Exec("INSERT INTO users (username, email, password_hash, created_at) VALUES ($1, $2, $3, $4)",
-		user.Username, user.Email, user.PasswordHash, user.CreatedAt)
+	err = db.QueryRow(`
+                INSERT INTO users (username, email, password_hash, created_at)
+                VALUES ($1, $2, $3, $4)
+                RETURNING id
+        `, user.Username, user.Email, user.PasswordHash, user.CreatedAt).Scan(&user.ID)
 	if err != nil {
 		return fmt.Errorf("ошибка при добавлении пользователя: %v", err)
 	}
