@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"banking-api/internal/db"
+	"banking-api/internal/services"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -39,4 +40,13 @@ func GetAnalyticsHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(stats)
+}
+func GetKeyRateHandler(w http.ResponseWriter, r *http.Request) {
+	rate, err := services.GetCentralBankKeyRate()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Ошибка получения ставки: %v", err), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]float64{"key_rate": rate})
 }

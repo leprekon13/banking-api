@@ -62,6 +62,7 @@ func main() {
 
 	protected.HandleFunc("/analytics", handlers.GetAnalyticsHandler).Methods("GET")
 	protected.HandleFunc("/accounts/deposit", handlers.DepositHandler).Methods("POST")
+	protected.HandleFunc("/cbr/keyrate", handlers.GetKeyRateHandler).Methods("GET")
 
 	log.Info("Сервер запущен на http://localhost:8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {
